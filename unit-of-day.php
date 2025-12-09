@@ -16,6 +16,8 @@ function respond_error($message) {
 }
 
 $feedUrl = 'https://www.rvonedata.com/feed/export/data?accountId=625&token=d-8Pb-Vc14iENe1yCkdP2w&version=2&format=json';
+$cacheFile = __DIR__ . '/unit-of-day-cache.json';
+$today = (new DateTime('now', new DateTimeZone('America/New_York')))->format('Y-m-d');
 
 /**
  * Fetch URL via cURL (more reliable than file_get_contents on many hosts)
@@ -104,10 +106,39 @@ $pricedUnits = array_filter($units, function ($u) {
     $prices = $u['prices'] ?? [];
     return !empty($prices['sales']) || !empty($prices['msrp']);
 });
-$pool = !empty($pricedUnits) ? $pricedUnits : $units;
+$pool = array_values(!empty($pricedUnits) ? $pricedUnits : $units);
 
-// Pick random unit from pool
-$unit = $pool[array_rand($pool)];
+if (empty($pool)) {
+    respond_error('No units available after filtering');
+}
+
+// Load cache to keep one unit per day and rotate sequentially
+$cache = null;
+if (file_exists($cacheFile)) {
+    $json = file_get_contents($cacheFile);
+    if ($json !== false) {
+        $cache = json_decode($json, true);
+    }
+}
+
+if (
+    is_array($cache) &&
+    ($cache['date'] ?? '') === $today &&
+    isset($cache['unit']) &&
+    is_array($cache['unit'])
+) {
+    echo json_encode($cache['unit']);
+    exit;
+}
+
+// Pick next unit in sequence, wrapping around when we reach the end
+$lastIndex = isset($cache['index']) ? intval($cache['index']) : -1;
+$nextIndex = $lastIndex + 1;
+if ($nextIndex < 0 || $nextIndex >= count($pool)) {
+    $nextIndex = 0;
+}
+
+$unit = $pool[$nextIndex];
 
 $prices = $unit['prices'] ?? [];
 $sales  = isset($prices['sales']) ? floatval($prices['sales']) : 0;
@@ -156,5 +187,13 @@ $output = [
     'image2'          => $image2,
     'detail_url'      => $detailUrl,
 ];
+
+// Persist selection so the same unit is shown all day and the next day advances
+$cacheData = [
+    'date' => $today,
+    'index' => $nextIndex,
+    'unit' => $output,
+];
+@file_put_contents($cacheFile, json_encode($cacheData));
 
 echo json_encode($output);
