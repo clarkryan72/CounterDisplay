@@ -88,6 +88,17 @@ function find_asset_url($assets, $type) {
     return null;
 }
 
+// First available asset with a URL, regardless of type
+function find_first_asset_url($assets) {
+    if (!is_array($assets)) return null;
+    foreach ($assets as $asset) {
+        if (!empty($asset['url'])) {
+            return $asset['url'];
+        }
+    }
+    return null;
+}
+
 // Prefer units with a price
 $pricedUnits = array_filter($units, function ($u) {
     $prices = $u['prices'] ?? [];
@@ -109,12 +120,13 @@ $slides = $props['slideCount'] ?? null;
 $sleeps = $props['sleeps']     ?? null;
 
 $assets    = $unit['assets'] ?? [];
-$floorplan = find_asset_url($assets, 'Unit Technical Drawing');
-$photo     = find_asset_url($assets, 'Unit Photo');
+$floorplan  = find_asset_url($assets, 'Unit Technical Drawing');
+$firstAsset = find_first_asset_url($assets);
 
-// Only show a single image: prefer tech drawing, otherwise fallback to photo
-$image1 = $floorplan ?: $photo;
-$image2 = null;
+// Image 1: tech drawing if available, otherwise first asset
+// Image 2: first asset in the list, or fallback to tech drawing
+$image1 = $floorplan ?: $firstAsset;
+$image2 = $firstAsset ?: $floorplan;
 
 // Title: "YEAR Make Model" if possible, else description
 $year  = $unit['year']  ?? '';

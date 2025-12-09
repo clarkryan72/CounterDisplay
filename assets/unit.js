@@ -47,16 +47,24 @@ async function loadUnitOfDay() {
     if (titleEl) titleEl.textContent = title || "Unit of the Day";
     if (stockEl) stockEl.textContent = stock ? `Stock #${stock}` : "";
 
-    // ---- Images (show only tech drawing / second image) ----
+    // ---- Images (tech drawing + first asset image) ----
+    const techDrawingImage = image1 || image2;
+    const firstAssetImage  = image2 || image1;
+
     if (img1El && img1El.parentElement) {
-      img1El.parentElement.style.display = "none"; // hide extra image slot
+      if (techDrawingImage) {
+        img1El.src = techDrawingImage;
+        img1El.alt = "Unit technical drawing";
+        img1El.parentElement.style.display = "";
+      } else {
+        img1El.parentElement.style.display = "none";
+      }
     }
 
     if (img2El && img2El.parentElement) {
-      const techDrawingImage = image2 || image1; // show only tech_drawing image (image #2 preferred)
-      if (techDrawingImage) {
-        img2El.src = techDrawingImage;
-        img2El.alt = "Unit technical drawing";
+      if (firstAssetImage) {
+        img2El.src = firstAssetImage;
+        img2El.alt = "Unit photo";
         img2El.parentElement.style.display = "";
       } else {
         img2El.parentElement.style.display = "none";
