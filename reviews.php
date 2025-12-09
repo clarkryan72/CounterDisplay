@@ -5,6 +5,9 @@
 // It DOES NOT call Google. It only reads reviews-cache.json
 // that is written by reviews-refresh.php once per day.
 
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 header('Content-Type: application/json');
 
 $cacheFile = __DIR__ . '/reviews-cache.json';

@@ -5,6 +5,9 @@
 // It calls Google Places API ONE TIME, then writes reviews-cache.json.
 // Your dashboard will ONLY read from reviews-cache.json, never Google directly.
 
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 header('Content-Type: application/json');
 
 // TODO: replace with your real key + place id
