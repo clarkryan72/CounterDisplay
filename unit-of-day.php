@@ -78,6 +78,26 @@ if (empty($units)) {
     respond_error('No units found in feed');
 }
 
+function is_new_active_unit($unit)
+{
+    $condition = strtolower(trim($unit['condition'] ?? $unit['newUsed'] ?? $unit['inventoryType'] ?? ''));
+    if ($condition && (strpos($condition, 'used') !== false || strpos($condition, 'pre-owned') !== false || strpos($condition, 'preowned') !== false)) {
+        return false;
+    }
+
+    $status = strtolower(trim($unit['status'] ?? $unit['inventoryStatus'] ?? ''));
+    if ($status && !in_array($status, ['active', 'available'], true)) {
+        return false;
+    }
+
+    $isSold = $unit['isSold'] ?? $unit['sold'] ?? null;
+    if (is_bool($isSold) && $isSold === true) {
+        return false;
+    }
+
+    return true;
+}
+
 // Helper to find first asset by type
 function find_asset_url($assets, $type) {
     if (!is_array($assets)) return null;
@@ -104,12 +124,18 @@ function find_first_asset_url($assets) {
     return null;
 }
 
+// Prefer new, active units only
+$newActiveUnits = array_values(array_filter($units, 'is_new_active_unit'));
+if (empty($newActiveUnits)) {
+    respond_error('No new active units found in feed');
+}
+
 // Prefer units with a price
-$pricedUnits = array_filter($units, function ($u) {
+$pricedUnits = array_filter($newActiveUnits, function ($u) {
     $prices = $u['prices'] ?? [];
     return !empty($prices['sales']) || !empty($prices['msrp']);
 });
-$pool = array_values(!empty($pricedUnits) ? $pricedUnits : $units);
+$pool = array_values(!empty($pricedUnits) ? $pricedUnits : $newActiveUnits);
 
 if (empty($pool)) {
     respond_error('No units available after filtering');
@@ -128,7 +154,8 @@ if (
     is_array($cache) &&
     ($cache['date'] ?? '') === $today &&
     isset($cache['unit']) &&
-    is_array($cache['unit'])
+    is_array($cache['unit']) &&
+    ($cache['meta']['is_new_active'] ?? false) === true
 ) {
     echo json_encode($cache['unit']);
     exit;
@@ -157,10 +184,8 @@ $assets    = $unit['assets'] ?? [];
 $floorplan  = find_asset_url($assets, 'Unit Technical Drawing');
 $firstAsset = find_first_asset_url($assets);
 
-// Image 1: tech drawing if available, otherwise first asset
-// Image 2: first asset in the list, or fallback to tech drawing
+// Single image: prefer tech drawing, fallback to first available asset
 $image1 = $floorplan ?: $firstAsset;
-$image2 = $firstAsset ?: $floorplan;
 
 // Title: "YEAR Make Model" if possible, else description
 $year  = $unit['year']  ?? '';
@@ -187,7 +212,6 @@ $output = [
     'slides'          => $slides,
     'sleeps'          => $sleeps,
     'image1'          => $image1,
-    'image2'          => $image2,
     'detail_url'      => $detailUrl,
 ];
 
@@ -196,6 +220,9 @@ $cacheData = [
     'date' => $today,
     'index' => $nextIndex,
     'unit' => $output,
+    'meta' => [
+        'is_new_active' => is_new_active_unit($unit),
+    ],
 ];
 @file_put_contents($cacheFile, json_encode($cacheData));
 

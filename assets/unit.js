@@ -2,7 +2,6 @@ async function loadUnitOfDay() {
   const titleEl       = document.getElementById("uotdTitle");
   const stockEl       = document.getElementById("uotdStock");
   const img1El        = document.getElementById("uotdImage1");
-  const img2El        = document.getElementById("uotdImage2");
   const priceEl       = document.getElementById("uotdPrice");
   const paymentLineEl = document.getElementById("uotdPaymentLine");
   const financeMetaEl = document.getElementById("uotdFinanceMeta");
@@ -34,7 +33,6 @@ async function loadUnitOfDay() {
       price,
       price_formatted,
       image1,
-      image2,
       year,
       make,
       model,
@@ -47,27 +45,16 @@ async function loadUnitOfDay() {
     if (titleEl) titleEl.textContent = title || "Unit of the Day";
     if (stockEl) stockEl.textContent = stock ? `Stock #${stock}` : "";
 
-    // ---- Images (tech drawing + first asset image) ----
-    const techDrawingImage = image1 || image2;
-    const firstAssetImage  = image2 || image1;
+    // ---- Image: tech drawing (preferred) or first available asset ----
+    const primaryImage = image1;
 
     if (img1El && img1El.parentElement) {
-      if (techDrawingImage) {
-        img1El.src = techDrawingImage;
+      if (primaryImage) {
+        img1El.src = primaryImage;
         img1El.alt = "Unit technical drawing";
         img1El.parentElement.style.display = "";
       } else {
         img1El.parentElement.style.display = "none";
-      }
-    }
-
-    if (img2El && img2El.parentElement) {
-      if (firstAssetImage) {
-        img2El.src = firstAssetImage;
-        img2El.alt = "Unit photo";
-        img2El.parentElement.style.display = "";
-      } else {
-        img2El.parentElement.style.display = "none";
       }
     }
 
