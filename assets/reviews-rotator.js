@@ -1,5 +1,7 @@
 let reviews = [];
 let currentReviewIndex = 0;
+let reviewTotal = 0;
+let overallRating = null;
 
 function setupReviewQr() {
   const qrImg = document.getElementById("reviewQr");
@@ -8,7 +10,6 @@ function setupReviewQr() {
     "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
     encodeURIComponent(GOOGLE_REVIEW_URL);
 }
-
 
 function showCurrentReview() {
   const textEl = document.getElementById("reviewText");
@@ -21,6 +22,7 @@ function showCurrentReview() {
     textEl.textContent = "No reviews available.";
     authorEl.textContent = "";
     timeEl.textContent = "";
+    countEl.textContent = `${reviewTotal} Customer Reviews`;
     return;
   }
 
@@ -29,13 +31,14 @@ function showCurrentReview() {
   authorEl.textContent = r.author_name || "";
   timeEl.textContent = r.relative_time_description || "";
 
-  if (r._overall_rating) {
-    const stars = Math.round(r._overall_rating);
+  if (overallRating) {
+    const stars = Math.round(overallRating);
     ratingEl.textContent = "★".repeat(stars);
+  } else {
+    ratingEl.textContent = "";
   }
-  if (r._user_ratings_total) {
-    countEl.textContent = `${r._user_ratings_total} Google reviews`;
-  }
+
+  countEl.textContent = `${reviewTotal} Customer Reviews`;
 
   currentReviewIndex = (currentReviewIndex + 1) % reviews.length;
 }
@@ -45,13 +48,19 @@ async function loadReviews() {
     const res = await fetch("reviews.php");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
+
     reviews = data.reviews || [];
+    reviewTotal = data.total ?? reviews.length;
+    overallRating = data.rating ?? null;
+
     if (reviews.length) {
       currentReviewIndex = 0;
       showCurrentReview();
     } else {
       document.getElementById("reviewText").textContent =
         "No reviews available.";
+      document.getElementById("reviewsCount").textContent =
+        `${reviewTotal} Customer Reviews`;
     }
   } catch (err) {
     console.error("Reviews error:", err);
@@ -64,5 +73,5 @@ async function loadReviews() {
 
 setupReviewQr();
 loadReviews();
-setInterval(showCurrentReview, 2 * 60 * 1000);   // rotate every 2 min
-setInterval(loadReviews, 60 * 60 * 1000);        // refresh list hourly
+setInterval(showCurrentReview, 2 * 60 * 1000); // rotate every 2 min
+setInterval(loadReviews, 60 * 60 * 1000); // refresh list hourly

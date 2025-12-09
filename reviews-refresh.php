@@ -2,8 +2,8 @@
 // reviews-refresh.php
 //
 // This script should be run by a CRON job once per day (e.g., at midnight).
-// It calls Google Places API ONE TIME, then writes reviews-cache.json.
-// Your dashboard will ONLY read from reviews-cache.json, never Google directly.
+// It calls Google Places API ONE TIME, updates reviews-cache.json, and
+// appends any NEW reviews since today to master_reviews.json.
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
@@ -29,7 +29,8 @@ $url = 'https://maps.googleapis.com/maps/api/place/details/json?' . http_build_q
     'key'      => $apiKey,
 ]);
 
-function fetch_url($url) {
+function fetch_url($url)
+{
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
@@ -52,6 +53,83 @@ function fetch_url($url) {
         throw new Exception("Google returned HTTP $httpCode. Body preview: " . $preview);
     }
     return $body;
+}
+
+function load_master_reviews($path)
+{
+    if (!file_exists($path)) {
+        return [];
+    }
+
+    $json = file_get_contents($path);
+    if ($json === false) {
+        return [];
+    }
+
+    $decoded = json_decode($json, true);
+    if ($decoded === null) {
+        return [];
+    }
+
+    $reviews = $decoded['reviews'] ?? $decoded;
+    return is_array($reviews) ? $reviews : [];
+}
+
+function save_master_reviews($path, array $reviews)
+{
+    usort($reviews, function ($a, $b) {
+        $aTime = strtotime($a['review_date'] ?? '') ?: 0;
+        $bTime = strtotime($b['review_date'] ?? '') ?: 0;
+        return $bTime <=> $aTime; // newest first
+    });
+
+    $payload = [
+        'updated_at' => date('c'),
+        'reviews'    => array_values($reviews),
+    ];
+
+    return file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) !== false;
+}
+
+function append_new_google_reviews(array $googleReviews, $masterPath)
+{
+    $masterReviews = load_master_reviews($masterPath);
+
+    $existingKeys = [];
+    foreach ($masterReviews as $review) {
+        $key = md5(strtolower(($review['customer_name'] ?? '') . '|' . ($review['review'] ?? '') . '|' . ($review['review_date'] ?? '')));
+        $existingKeys[$key] = true;
+    }
+
+    $todayStart = strtotime('today');
+    foreach ($googleReviews as $r) {
+        if (!isset($r['time'])) {
+            continue;
+        }
+
+        $reviewDate = date('Y-m-d H:i:s', (int) $r['time']);
+        if (strtotime($reviewDate) < $todayStart) {
+            continue; // only append items dated today or later
+        }
+
+        $entry = [
+            'source'       => 'google',
+            'customer_name'=> $r['author_name'] ?? 'Google Reviewer',
+            'review'       => $r['text'] ?? '',
+            'review_date'  => $reviewDate,
+            'rating'       => $r['rating'] ?? null,
+        ];
+
+        $key = md5(strtolower(($entry['customer_name'] ?? '') . '|' . ($entry['review'] ?? '') . '|' . ($entry['review_date'] ?? '')));
+        if (isset($existingKeys[$key])) {
+            continue; // already present
+        }
+
+        $masterReviews[] = $entry;
+        $existingKeys[$key] = true;
+    }
+
+    return save_master_reviews($masterPath, $masterReviews);
 }
 
 try {
@@ -100,9 +178,17 @@ try {
         throw new Exception('Failed to write reviews-cache.json');
     }
 
+    // Append any new (today or later) Google reviews to master_reviews.json
+    $masterFile = __DIR__ . '/master_reviews.json';
+    $masterUpdated = append_new_google_reviews($reviews, $masterFile);
+
+    if (!$masterUpdated) {
+        throw new Exception('Failed to update master_reviews.json');
+    }
+
     echo json_encode([
         'success' => true,
-        'message' => 'reviews-cache.json updated',
+        'message' => 'reviews-cache.json updated and master_reviews.json merged',
         'count'   => count($reviews),
     ]);
 } catch (Exception $e) {
