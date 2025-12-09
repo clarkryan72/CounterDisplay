@@ -669,6 +669,8 @@ body {
   color: transparent;
   position: relative;
   overflow: hidden;
+  animation: camperShowBounce 2.6s ease-in-out infinite;
+  transform-origin: center;
   background: radial-gradient(circle at 20% 20%, rgba(74, 222, 128, 0.25), rgba(16, 185, 129, 0.8)),
     #065f46;
 }
@@ -677,10 +679,12 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 18% 82%, rgba(250, 204, 21, 0.28), transparent 55%),
-    radial-gradient(circle at 82% 18%, rgba(52, 211, 153, 0.32), transparent 52%),
-    url("rv-show-icon.png") center/78% no-repeat;
-  opacity: 0.95;
+  border-radius: inherit;
+  background:
+    url("rv-show-icon.png") center/cover no-repeat,
+    radial-gradient(circle at 18% 82%, rgba(250, 204, 21, 0.32), transparent 55%),
+    radial-gradient(circle at 82% 18%, rgba(52, 211, 153, 0.34), transparent 52%);
+  opacity: 0.98;
   animation: camperShowPulse 3.6s ease-in-out infinite;
 }
 
@@ -695,6 +699,21 @@ body {
   color: #ffffff;
   font-weight: 700;
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes camperShowBounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.65);
+  }
+  30% {
+    transform: translateY(-6px) scale(1.06);
+    box-shadow: 0 12px 24px rgba(34, 197, 94, 0.35);
+  }
+  55% {
+    transform: translateY(3px) scale(0.98);
+  }
 }
 
 @keyframes camperShowPulse {
