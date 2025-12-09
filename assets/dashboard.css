@@ -662,19 +662,25 @@ body {
   color: transparent;
   position: relative;
   overflow: hidden;
+  background: var(--nc-accent);
 }
 
 .calendar-cell.camper-show:not(.closed)::after {
-  content: "";
+  content: "RV\AShow";
   position: absolute;
   inset: 0;
-  background-image: url("rv-show-icon.png"); /* file should live in /assets/ */
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: pre-line;
+  color: #facc15;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
-/* date number over icon */
+/* date number over text */
 .calendar-cell.camper-show:not(.closed)::before {
   content: attr(data-daynum);
   position: absolute;
