@@ -49,12 +49,13 @@ body {
   height: 100vh;
   padding: 1rem 1.2rem 1.4rem;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: auto auto 1fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto 1fr;
   grid-template-areas:
-    "header weather"
-    "mid mid"
-    "calendar calendar";
+    "header"
+    "weather"
+    "mid"
+    "calendar";
   gap: 0.9rem;
   margin: 0 auto;
 }
@@ -277,18 +278,17 @@ body {
 /* MID SECTION */
 .mid-section {
   grid-area: mid;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 0.8rem;
-  align-items: stretch;
 }
 
 .mid-section .reviews-card {
-  grid-column: 2;
+  grid-column: auto;
 }
 
 .mid-section .uotd-card {
-  grid-column: 1;
+  grid-column: auto;
 }
 
 /* UNIT OF THE DAY */
