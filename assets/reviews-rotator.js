@@ -2,6 +2,35 @@ let reviews = [];
 let currentReviewIndex = 0;
 let reviewTotal = 0;
 let overallRating = null;
+let reviewVersion = null;
+const REVIEW_PROGRESS_KEY = "nc_review_progress";
+
+function loadStoredIndex(version, maxLength) {
+  try {
+    const raw = localStorage.getItem(REVIEW_PROGRESS_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== version) return 0;
+
+    const idx = Number.parseInt(parsed.index, 10);
+    if (Number.isNaN(idx) || idx < 0) return 0;
+    return maxLength > 0 ? idx % maxLength : 0;
+  } catch (err) {
+    console.warn("Unable to read review progress", err);
+    return 0;
+  }
+}
+
+function storeNextIndex(version, index) {
+  try {
+    localStorage.setItem(
+      REVIEW_PROGRESS_KEY,
+      JSON.stringify({ version, index })
+    );
+  } catch (err) {
+    console.warn("Unable to persist review progress", err);
+  }
+}
 
 function setupReviewQr() {
   const qrImg = document.getElementById("reviewQr");
@@ -40,7 +69,11 @@ function showCurrentReview() {
 
   countEl.textContent = `${reviewTotal} Customer Reviews`;
 
-  currentReviewIndex = (currentReviewIndex + 1) % reviews.length;
+  const nextIndex = (currentReviewIndex + 1) % reviews.length;
+  if (reviewVersion) {
+    storeNextIndex(reviewVersion, nextIndex);
+  }
+  currentReviewIndex = nextIndex;
 }
 
 async function loadReviews() {
@@ -52,9 +85,10 @@ async function loadReviews() {
     reviews = data.reviews || [];
     reviewTotal = data.total ?? reviews.length;
     overallRating = data.rating ?? null;
+    reviewVersion = data.generated_at || `v1-${reviews.length}`;
 
     if (reviews.length) {
-      currentReviewIndex = 0;
+      currentReviewIndex = loadStoredIndex(reviewVersion, reviews.length);
       showCurrentReview();
     } else {
       document.getElementById("reviewText").textContent =

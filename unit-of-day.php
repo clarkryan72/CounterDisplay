@@ -174,6 +174,38 @@ if (empty($pool)) {
     respond_error('No units available after filtering');
 }
 
+// Stable ordering so rotation is predictable day-to-day
+usort($pool, function ($a, $b) {
+    $aStock = strtolower(trim($a['stockNumber'] ?? ''));
+    $bStock = strtolower(trim($b['stockNumber'] ?? ''));
+
+    if ($aStock !== '' && $bStock !== '') {
+        return $aStock <=> $bStock;
+    }
+
+    $aTitle = strtolower(trim(($a['year'] ?? '') . ' ' . ($a['make'] ?? '') . ' ' . ($a['model'] ?? '')));
+    $bTitle = strtolower(trim(($b['year'] ?? '') . ' ' . ($b['make'] ?? '') . ' ' . ($b['model'] ?? '')));
+    return $aTitle <=> $bTitle;
+});
+
+function unit_identifier($unit)
+{
+    if (!empty($unit['stockNumber'])) {
+        return (string) $unit['stockNumber'];
+    }
+    if (!empty($unit['itemDetailUrl'])) {
+        return (string) $unit['itemDetailUrl'];
+    }
+
+    $title = trim(($unit['year'] ?? '') . ' ' . ($unit['make'] ?? '') . ' ' . ($unit['model'] ?? ''));
+    return $title !== '' ? $title : md5(json_encode($unit));
+}
+
+$unitIndexById = [];
+foreach ($pool as $idx => $unit) {
+    $unitIndexById[unit_identifier($unit)] = $idx;
+}
+
 // Load cache to keep one unit per day and rotate sequentially
 $cache = null;
 if (file_exists($cacheFile)) {
@@ -183,25 +215,37 @@ if (file_exists($cacheFile)) {
     }
 }
 
-if (
-    is_array($cache) &&
-    ($cache['date'] ?? '') === $today &&
-    isset($cache['unit']) &&
-    is_array($cache['unit']) &&
-    ($cache['meta']['is_new_active'] ?? false) === true
-) {
-    echo json_encode($cache['unit']);
-    exit;
+// If we already picked a unit today, ensure it is still in the pool and new
+if (is_array($cache) && ($cache['date'] ?? '') === $today) {
+    $cachedId = $cache['meta']['id'] ?? ($cache['unit']['stock'] ?? null);
+    if ($cachedId && isset($unitIndexById[$cachedId])) {
+        $cachedUnit = $pool[$unitIndexById[$cachedId]];
+        if (is_new_active_unit($cachedUnit)) {
+            $unit = $cachedUnit;
+            $nextIndex = $unitIndexById[$cachedId];
+            goto render_and_cache;
+        }
+    }
 }
 
 // Pick next unit in sequence, wrapping around when we reach the end
-$lastIndex = isset($cache['index']) ? intval($cache['index']) : -1;
+$lastIndex = -1;
+if (isset($cache['meta']['id']) && isset($unitIndexById[$cache['meta']['id']])) {
+    $lastIndex = $unitIndexById[$cache['meta']['id']];
+} elseif (isset($cache['index'])) {
+    $lastIndex = intval($cache['index']);
+}
+
 $nextIndex = $lastIndex + 1;
 if ($nextIndex < 0 || $nextIndex >= count($pool)) {
     $nextIndex = 0;
 }
 
 $unit = $pool[$nextIndex];
+
+render_and_cache:
+
+$unitId = unit_identifier($unit);
 
 $prices = $unit['prices'] ?? [];
 $sales  = isset($prices['sales']) ? floatval($prices['sales']) : 0;
@@ -250,11 +294,12 @@ $output = [
 
 // Persist selection so the same unit is shown all day and the next day advances
 $cacheData = [
-    'date' => $today,
+    'date'  => $today,
     'index' => $nextIndex,
-    'unit' => $output,
-    'meta' => [
+    'unit'  => $output,
+    'meta'  => [
         'is_new_active' => is_new_active_unit($unit),
+        'id'            => $unitId,
     ],
 ];
 @file_put_contents($cacheFile, json_encode($cacheData));
