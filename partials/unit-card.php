@@ -8,13 +8,10 @@
   </div>
 
   <div class="uotd-body">
-    <!-- LEFT: images side-by-side -->
+    <!-- LEFT: single tech drawing or first photo -->
     <div class="uotd-images">
       <div class="uotd-image-wrapper">
         <img id="uotdImage1" src="" alt="Unit floorplan" />
-      </div>
-      <div class="uotd-image-wrapper">
-        <img id="uotdImage2" src="" alt="Unit photo" />
       </div>
     </div>
 

@@ -40,7 +40,7 @@ body {
   align-items: stretch;
   justify-content: center;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .dashboard {
@@ -310,13 +310,13 @@ body {
   align-items: center;
 }
 
-/* LEFT: images side by side, 4:3 like 800x600 */
+/* LEFT: single image, 4:3 like 800x600 */
 .uotd-images {
   display: flex;
   flex-direction: row;
   gap: 0.4rem;
   justify-content: center; /* center images */
-  max-width: clamp(13rem, 40vw, 16.5rem);
+  max-width: clamp(14rem, 42vw, 18rem);
   margin: 0 auto;
 }
 
