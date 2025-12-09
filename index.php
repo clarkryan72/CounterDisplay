@@ -32,16 +32,23 @@
   <script>
   (function () {
     // How long to wait before showing the screensaver (in minutes)
-    const SCREENSAVER_DELAY_MINUTES = 1;
+    const SCREENSAVER_DELAY_MINUTES = 30;
     const SCREENSAVER_URL = "screensaver.php";
+    const STORAGE_KEY = "ncScreensaverLastPlay";
 
     // Convert minutes → milliseconds
     const delayMs = SCREENSAVER_DELAY_MINUTES * 60 * 1000;
 
+    // Determine remaining delay based on last playback time
+    const lastPlay = parseInt(localStorage.getItem(STORAGE_KEY), 10) || 0;
+    const elapsed = Date.now() - lastPlay;
+    const remaining = Math.max(delayMs - elapsed, 0);
+
     // Start one-shot timer
     setTimeout(function () {
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
       window.location.href = SCREENSAVER_URL;
-    }, delayMs);
+    }, remaining || delayMs);
   })();
 </script>
 </body>
