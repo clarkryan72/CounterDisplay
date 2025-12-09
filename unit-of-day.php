@@ -112,10 +112,9 @@ $assets    = $unit['assets'] ?? [];
 $floorplan = find_asset_url($assets, 'Unit Technical Drawing');
 $photo     = find_asset_url($assets, 'Unit Photo');
 
-// image1 = tech drawing if available, else photo
+// Only show a single image: prefer tech drawing, otherwise fallback to photo
 $image1 = $floorplan ?: $photo;
-// image2 = photo if it is different from image1
-$image2 = ($photo && $photo !== $image1) ? $photo : null;
+$image2 = null;
 
 // Title: "YEAR Make Model" if possible, else description
 $year  = $unit['year']  ?? '';
