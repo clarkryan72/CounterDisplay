@@ -335,8 +335,9 @@ body {
 .uotd-image-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: cover;             /* fills the box */
+  object-fit: contain;           /* preserve full image without cropping */
   border-radius: 0.9rem;
+  background: #0f172a;
 }
 
 /* RIGHT: payment + price + specs + QR */
