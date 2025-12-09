@@ -80,8 +80,41 @@ if (empty($units)) {
 
 function is_new_active_unit($unit)
 {
-    $condition = strtolower(trim($unit['condition'] ?? $unit['newUsed'] ?? $unit['inventoryType'] ?? ''));
-    if ($condition && (strpos($condition, 'used') !== false || strpos($condition, 'pre-owned') !== false || strpos($condition, 'preowned') !== false)) {
+    $conditionRaw = strtolower(trim($unit['condition'] ?? $unit['newUsed'] ?? $unit['inventoryType'] ?? ''));
+    $condition    = preg_replace('/\s+/', ' ', $conditionRaw);
+
+    // Reject any unit explicitly marked as used/pre-owned
+    $usedIndicators = ['used', 'pre-owned', 'preowned', 'pre owned'];
+    foreach ($usedIndicators as $needle) {
+        if ($condition && strpos($condition, $needle) !== false) {
+            return false;
+        }
+    }
+
+    // Require a positive indicator that the unit is new
+    $hasNewIndicator = false;
+
+    $newFlags = [
+        $unit['isNew'] ?? null,
+        $unit['new']   ?? null,
+    ];
+    foreach ($newFlags as $flag) {
+        if (is_bool($flag)) {
+            $hasNewIndicator = $hasNewIndicator || $flag === true;
+        } elseif (is_numeric($flag)) {
+            $hasNewIndicator = $hasNewIndicator || intval($flag) === 1;
+        } elseif (is_string($flag)) {
+            $flagLower = strtolower(trim($flag));
+            $hasNewIndicator = $hasNewIndicator || in_array($flagLower, ['y', 'yes', 'true', '1', 'new'], true);
+        }
+    }
+
+    if (!$hasNewIndicator && $condition) {
+        // Common strings such as "New", "New Inventory", or shorthand "N"
+        $hasNewIndicator = strpos($condition, 'new') !== false || $condition === 'n';
+    }
+
+    if (!$hasNewIndicator) {
         return false;
     }
 
