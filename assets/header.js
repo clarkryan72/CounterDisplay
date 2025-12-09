@@ -5,29 +5,27 @@
 
   if (!headerDateEl || !headerTimeEl) return;
 
-  const WEEKDAYS = ["Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"];
-  const MONTHS = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-  ];
+  const TIME_ZONE = "America/New_York";
 
   function updateHeaderDateTime() {
     const now = new Date();
 
-    const weekday = WEEKDAYS[now.getDay()];
-    const monthName = MONTHS[now.getMonth()];
-    const day = now.getDate();
-    const year = now.getFullYear();
-
-    // Example: "Tues, Dec 9, 2025" (shortened date format)
-    headerDateEl.textContent = `${weekday}, ${monthName} ${day}, ${year}`;
+    // Example: "Tue, Dec 9, 2025" (shortened date format)
+    headerDateEl.textContent = new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: TIME_ZONE
+    }).format(now);
 
     // Example: "9:23 AM"
-    headerTimeEl.textContent = now.toLocaleTimeString([], {
+    headerTimeEl.textContent = new Intl.DateTimeFormat("en-US", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true
-    });
+      hour12: true,
+      timeZone: TIME_ZONE
+    }).format(now);
   }
 
   updateHeaderDateTime();
