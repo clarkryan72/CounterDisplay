@@ -107,22 +107,10 @@ async function loadUnitOfDay() {
         "Financing available — see dealer for details.";
     }
 
-    // ---- Specs pills (no Length pill) ----
+    // ---- Specs pills removed to narrow the card ----
     if (specsEl) {
-      const pills = [];
-      const nameBits = [];
-      if (year)  nameBits.push(year);
-      if (make)  nameBits.push(make);
-      if (model) nameBits.push(model);
-      if (nameBits.length) pills.push(nameBits.join(" "));
-
-      // no length pill
-      if (slides) pills.push(`Slides: ${slides}`);
-      if (sleeps) pills.push(`Sleeps: ${sleeps}`);
-
-      specsEl.innerHTML = pills
-        .map((text) => `<span class="uotd-spec-pill">${text}</span>`)
-        .join("");
+      specsEl.innerHTML = "";
+      specsEl.style.display = "none";
     }
 
     // ---- QR code for detail_url ----
