@@ -6,18 +6,13 @@
   if (!headerDateEl || !headerTimeEl) return;
 
   const TIME_ZONE = "America/New_York";
+  const STATIC_DATE_TEXT = "Tuesday, December 9th, 2025";
 
   function updateHeaderDateTime() {
     const now = new Date();
 
-    // Example: "Tue, Dec 9, 2025" (shortened date format)
-    headerDateEl.textContent = new Intl.DateTimeFormat("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: TIME_ZONE
-    }).format(now);
+    // Fixed display date requested by design
+    headerDateEl.textContent = STATIC_DATE_TEXT;
 
     // Example: "9:23 AM"
     headerTimeEl.textContent = new Intl.DateTimeFormat("en-US", {
