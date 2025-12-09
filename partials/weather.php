@@ -1,4 +1,4 @@
-<section class="weather-section">
+<section>
   <article class="card weather-card">
     <div class="weather-inner">
       <div class="weather-header">
