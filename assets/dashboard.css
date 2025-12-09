@@ -16,11 +16,11 @@
 }
 
 html {
-  font-size: clamp(12px, 1.05vw, 17px);
+  font-size: calc(11px + 0.7vh);
 }
 @media (max-height: 900px) {
   html {
-    font-size: 14px;
+    font-size: 15px;
   }
 }
 
@@ -45,19 +45,11 @@ body {
 
 .dashboard {
   width: 100%;
-  max-width: 1080px;
-  height: 100vh;
-  padding: 1rem 1.2rem 1.4rem;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto 1fr;
-  grid-template-areas:
-    "header"
-    "weather"
-    "mid"
-    "calendar";
-  gap: 0.9rem;
-  margin: 0 auto;
+  min-height: 100vh;
+  padding: 1.2rem 1.4rem 1.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
 }
 
 .card {
@@ -74,7 +66,6 @@ body {
 /* HEADER */
 .header-row {
   display: block;
-  grid-area: header;
 }
 
 .header-card {
@@ -82,9 +73,8 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 1.6rem;
-  min-height: 5rem;
-  padding: 0.9rem 1.05rem;
+  gap: 2.5rem;
+  min-height: 5.4rem;
 }
 
 .logo-row {
@@ -95,7 +85,7 @@ body {
 }
 
 .logo-row img {
-  height: 4.2rem;
+  height: 4.8rem;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
@@ -111,7 +101,7 @@ body {
 }
 
 .header-date {
-  font-size: clamp(1.1rem, 1.6vw, 1.6rem);
+  font-size: clamp(1.2rem, 1.7vw, 1.75rem);
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap; /* keep compact date on one line */
@@ -119,16 +109,12 @@ body {
 
 .header-time {
   margin-top: 0.15rem;
-  font-size: clamp(1.3rem, 1.85vw, 1.95rem);
+  font-size: clamp(1.4rem, 1.9vw, 2rem);
   font-weight: 600;
   color: var(--nc-light);
 }
 
 /* WEATHER CARD */
-.weather-section {
-  grid-area: weather;
-}
-
 .weather-card {
   position: relative;
   overflow: hidden;
@@ -150,7 +136,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  min-height: 12rem;
 }
 
 .weather-header {
@@ -277,18 +262,9 @@ body {
 
 /* MID SECTION */
 .mid-section {
-  grid-area: mid;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-}
-
-.mid-section .reviews-card {
-  grid-column: auto;
-}
-
-.mid-section .uotd-card {
-  grid-column: auto;
+  gap: 0.75rem;
 }
 
 /* UNIT OF THE DAY */
@@ -296,9 +272,8 @@ body {
 .uotd-card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.85rem 0.9rem;
-  height: 100%;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
 }
 
 .uotd-header {
@@ -330,8 +305,8 @@ body {
 
 .uotd-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr);
+  gap: 0.8rem;
   align-items: center;
 }
 
@@ -339,21 +314,21 @@ body {
 .uotd-images {
   display: flex;
   flex-direction: row;
-  gap: 0.35rem;
-  justify-content: center;
-  max-width: clamp(13rem, 38vw, 15.5rem);
+  gap: 0.4rem;
+  justify-content: center; /* center images */
+  max-width: clamp(13rem, 40vw, 16.5rem);
   margin: 0 auto;
 }
 
 .uotd-image-wrapper {
   flex: 1 1 0;
   background: radial-gradient(circle at top, rgba(15, 23, 42, 0.8), #020617);
-  border-radius: 0.95rem;
+  border-radius: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
-  padding: 0.3rem;
+  padding: 0.32rem;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
-  max-height: 8.4rem;
+  aspect-ratio: 4 / 3;          /* 800x600 proportions */
+  max-height: 9rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -362,8 +337,8 @@ body {
 .uotd-image-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  border-radius: 0.85rem;
+  object-fit: contain;           /* preserve full image without cropping */
+  border-radius: 0.9rem;
   background: #0f172a;
 }
 
@@ -385,7 +360,7 @@ body {
 .uotd-payment-amount {
   display: block;
   margin-top: 0.08rem;
-  font-size: 1.55rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: #bbf7d0;
 }
@@ -404,7 +379,7 @@ body {
 }
 
 .uotd-price {
-  font-size: 1.22rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #fef3c7;
 }
@@ -412,7 +387,7 @@ body {
 .uotd-finance-meta {
   font-size: 0.74rem;
   color: var(--nc-muted);
-  line-height: 1.32;
+  line-height: 1.35;
 }
 
 /* specs + QR in one row */
@@ -420,23 +395,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
-  margin-top: 0.05rem;
+  gap: 0.7rem;
+  margin-top: 0.1rem;
 }
 
 /* bigger pills */
 .uotd-specs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .uotd-spec-pill {
-  padding: 0.2rem 0.75rem;
+  padding: 0.22rem 0.8rem;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(148, 163, 184, 0.6);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--nc-light);
   font-weight: 500;
 }
@@ -457,11 +432,11 @@ body {
 }
 
 .uotd-qr img {
-  width: 3.4rem;
-  height: 3.4rem;
+  width: 3.75rem;
+  height: 3.75rem;
   border-radius: 0.55rem;
   background: #ffffff;
-  padding: 0.18rem;
+  padding: 0.2rem;
 }
 
 
@@ -469,8 +444,7 @@ body {
 .reviews-card {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  height: 100%;
+  gap: 0.7rem;
 }
 
 .reviews-header {
@@ -503,11 +477,10 @@ body {
   background: radial-gradient(circle at bottom, rgba(15, 23, 42, 0.8), #020617);
   border-radius: 1.1rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
-  padding: 0.8rem 0.9rem;
+  padding: 0.8rem 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0.55rem;
 }
 
 .review-text {
@@ -564,11 +537,10 @@ body {
 
 /* CALENDARS */
 .calendar-row {
-  grid-area: calendar;
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 1rem;
   min-height: 0;
 }
 
@@ -577,7 +549,7 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: var(--shadow-soft);
-  padding: 0.85rem 1rem 1rem;
+  padding: 0.9rem 1.2rem 1.1rem;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -600,7 +572,7 @@ body {
 }
 
 .calendar-month-label {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #e5e7eb;
 }
@@ -620,12 +592,12 @@ body {
 }
 
 .calendar-body {
-  margin-top: 0.1rem;
+  margin-top: 0.2rem;
   flex: 1 1 auto;
   display: grid;
   grid-template-rows: auto 1fr;
-  gap: 0.2rem;
-  font-size: 0.78rem;
+  gap: 0.25rem;
+  font-size: 0.8rem;
 }
 
 .calendar-weekdays {
@@ -754,8 +726,7 @@ body {
 
 @media (orientation: portrait) {
   .dashboard {
-    padding: 1rem 1.1rem 1.35rem;
-    gap: 0.8rem;
+    padding: 1.3rem 1.4rem 1.7rem;
   }
 
   .uotd-images {
