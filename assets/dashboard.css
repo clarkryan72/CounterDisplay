@@ -313,7 +313,9 @@ body {
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-  justify-content: center; /* center single tech drawing image */
+  justify-content: center; /* center images */
+  max-width: 22rem;
+  margin: 0 auto;
 }
 
 .uotd-image-wrapper {

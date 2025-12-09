@@ -6,12 +6,6 @@
         <div class="calendar-title">This Month</div>
         <div class="calendar-month-label" id="monthLabelCurrent">Month YYYY</div>
       </div>
-
-      <div class="calendar-legend">
-        <span><span class="legend-dot"></span> Today</span>
-        <span><span class="legend-dot legend-dot-show"></span> Atlanta RV Show</span>
-        <span><span class="legend-dot legend-dot-closed"></span> Closed</span>
-      </div>
     </div>
 
     <div class="calendar-body">
