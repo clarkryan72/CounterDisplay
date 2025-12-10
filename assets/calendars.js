@@ -97,7 +97,7 @@ function renderCalendar(monthOffset, gridId, labelId) {
     }
 
     if (isBirthday) {
-      // match the RV show styling: full-tile background with the provided GIF
+      // full-tile birthday styling with the provided GIF
       cell.textContent = day;
       cell.setAttribute("data-daynum", String(day));
     } else {
