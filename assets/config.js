@@ -14,18 +14,13 @@ const GOOGLE_REVIEW_URL = "https://g.page/r/CcX-PYUrciKPEAE/review";
 // No normal appointments right now
 const APPOINTMENTS = [];
 
-// Closed dates
+// Closed dates (manual ranges)
 const CLOSED_RANGES = [
   { start: "2025-12-23", end: "2026-01-01" }
 ];
 
-// Atlanta Camping & RV Show (Jan 22–25, 2026)
-const CAMPER_SHOW_DATES = [
-  "2026-01-22",
-  "2026-01-23",
-  "2026-01-24",
-  "2026-01-25"
-];
+// RV Show ranges
+const CAMPER_SHOW_RANGES = [];
 
 // Open-Meteo URL
 const OPEN_METEO_URL =

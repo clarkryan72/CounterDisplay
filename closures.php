@@ -5,30 +5,39 @@ header('Expires: 0');
 
 $closuresPath = __DIR__ . '/closures.json';
 
-function load_closure_ranges(string $path): array
+function load_schedule_data(string $path): array
 {
+    $default = [
+        'closures' => [],
+        'rv_shows' => [],
+    ];
+
     if (!file_exists($path)) {
-        return [];
+        return $default;
     }
 
     $contents = file_get_contents($path);
     if ($contents === false) {
-        return [];
+        return $default;
     }
 
     $decoded = json_decode($contents, true);
     if (!is_array($decoded)) {
-        return [];
+        return $default;
     }
 
-    return $decoded['ranges'] ?? [];
+    return [
+        'closures' => $decoded['ranges'] ?? [],
+        'rv_shows' => $decoded['rv_show_ranges'] ?? [],
+    ];
 }
 
-function save_closure_ranges(string $path, array $ranges): bool
+function save_schedule_data(string $path, array $closures, array $rvShows): bool
 {
     $payload = [
-        'updated_at' => date('c'),
-        'ranges'     => array_values($ranges),
+        'updated_at'      => date('c'),
+        'ranges'          => array_values($closures),
+        'rv_show_ranges'  => array_values($rvShows),
     ];
 
     return file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) !== false;
@@ -36,50 +45,62 @@ function save_closure_ranges(string $path, array $ranges): bool
 
 $errors = [];
 $successMessage = '';
-$currentRanges = load_closure_ranges($closuresPath);
+$scheduleData = load_schedule_data($closuresPath);
+$currentRanges = $scheduleData['closures'];
+$currentRvShows = $scheduleData['rv_shows'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $submitted = $_POST['closures'] ?? [];
-    $cleaned = [];
+    $submittedClosures = $_POST['closures'] ?? [];
+    $submittedRvShows = $_POST['rvshows'] ?? [];
 
-    foreach ($submitted as $range) {
-        $start = trim($range['start'] ?? '');
-        $end   = trim($range['end'] ?? '');
+    $validateRanges = static function (array $ranges, string $context) use (&$errors): array {
+        $cleaned = [];
 
-        if ($start === '' && $end === '') {
-            continue;
+        foreach ($ranges as $range) {
+            $start = trim($range['start'] ?? '');
+            $end   = trim($range['end'] ?? '');
+
+            if ($start === '' && $end === '') {
+                continue;
+            }
+
+            if ($end === '') {
+                $end = $start; // single-day entries
+            }
+
+            $startDate = DateTime::createFromFormat('Y-m-d', $start);
+            $endDate   = DateTime::createFromFormat('Y-m-d', $end);
+
+            $startValid = $startDate && $startDate->format('Y-m-d') === $start;
+            $endValid   = $endDate && $endDate->format('Y-m-d') === $end;
+
+            if (!$startValid || !$endValid) {
+                $errors[] = "{$context} dates must be in YYYY-MM-DD format.";
+                continue;
+            }
+
+            if ($startDate > $endDate) {
+                $errors[] = "{$context} start date cannot be after end date.";
+                continue;
+            }
+
+            $cleaned[] = [
+                'start' => $start,
+                'end'   => $end,
+            ];
         }
 
-        if ($end === '') {
-            $end = $start; // single-day closures
-        }
+        return $cleaned;
+    };
 
-        $startDate = DateTime::createFromFormat('Y-m-d', $start);
-        $endDate   = DateTime::createFromFormat('Y-m-d', $end);
-
-        $startValid = $startDate && $startDate->format('Y-m-d') === $start;
-        $endValid   = $endDate && $endDate->format('Y-m-d') === $end;
-
-        if (!$startValid || !$endValid) {
-            $errors[] = 'Dates must be in YYYY-MM-DD format.';
-            continue;
-        }
-
-        if ($startDate > $endDate) {
-            $errors[] = 'Start date cannot be after end date.';
-            continue;
-        }
-
-        $cleaned[] = [
-            'start' => $start,
-            'end'   => $end,
-        ];
-    }
+    $cleanClosures = $validateRanges($submittedClosures, 'Closure');
+    $cleanRvShows = $validateRanges($submittedRvShows, 'RV show');
 
     if (empty($errors)) {
-        if (save_closure_ranges($closuresPath, $cleaned)) {
-            $successMessage = 'Closure days saved. The dashboard will now highlight these days as closed.';
-            $currentRanges = $cleaned;
+        if (save_schedule_data($closuresPath, $cleanClosures, $cleanRvShows)) {
+            $successMessage = 'Schedule saved. Sundays are automatically marked closed unless they are RV Show dates.';
+            $currentRanges = $cleanClosures;
+            $currentRvShows = $cleanRvShows;
         } else {
             $errors[] = 'Unable to save closure days. Please check file permissions.';
         }
@@ -116,6 +137,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     p.description {
       color: #cbd5e1;
       line-height: 1.5;
+    }
+
+    .subheading {
+      margin: 24px 0 8px;
+      color: #7dd3fc;
+      letter-spacing: 0.02em;
+      font-size: 18px;
+    }
+
+    .helper-text {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-top: 6px;
+      line-height: 1.4;
     }
 
     .card {
@@ -219,7 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
   <div class="page-shell">
     <h1>Manage Closure Days</h1>
-    <p class="description">Add one or more date ranges for days the business is closed. The dashboard calendars will use this list to highlight closures.</p>
+    <p class="description">Add date ranges for planned closures and the RV Show. All Sundays are automatically marked closed on the dashboard unless they overlap with an RV Show.</p>
 
     <div class="card">
       <?php if ($successMessage): ?>
@@ -233,6 +268,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
 
       <form method="POST" id="closuresForm">
+        <div>
+          <div class="subheading">Closure dates</div>
+          <p class="helper-text">Add one or more date ranges when the business is closed. Sundays are treated as closed automatically.</p>
+        </div>
         <div id="closureList">
           <?php if (!empty($currentRanges)): ?>
             <?php foreach ($currentRanges as $idx => $range): ?>
@@ -243,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                   <label for="end-<?= (int) $idx; ?>">End date</label>
-                  <input type="date" id="end-<?= (int) $idx; ?>" name="closures[<?= (int) $idx; ?>][end]" value="<?= htmlspecialchars($range['end'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required />
+                  <input type="date" id="end-<?= (int) $idx; ?>" name="closures[<?= (int) $idx; ?>][end]" value="<?= htmlspecialchars($range['end'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <div class="row-actions">
                   <button type="button" class="btn-danger remove-row">Remove</button>
@@ -266,24 +305,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
           <?php endif; ?>
         </div>
+        <button type="button" class="btn-secondary" id="addClosureRow">Add another closure range</button>
 
-        <button type="button" class="btn-secondary" id="addRow">Add another date range</button>
+        <div style="margin-top: 24px;">
+          <div class="subheading">RV Show dates</div>
+          <p class="helper-text">Enter up to two RV Show date ranges per year. RV Show days override the automatic Sunday closures and will appear on the dashboard calendar.</p>
+        </div>
+
+        <div id="rvShowList">
+          <?php if (!empty($currentRvShows)): ?>
+            <?php foreach ($currentRvShows as $idx => $range): ?>
+              <div class="closure-row" data-row-index="<?= (int) $idx; ?>">
+                <div>
+                  <label for="rv-start-<?= (int) $idx; ?>">Start date</label>
+                  <input type="date" id="rv-start-<?= (int) $idx; ?>" name="rvshows[<?= (int) $idx; ?>][start]" value="<?= htmlspecialchars($range['start'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required />
+                </div>
+                <div>
+                  <label for="rv-end-<?= (int) $idx; ?>">End date</label>
+                  <input type="date" id="rv-end-<?= (int) $idx; ?>" name="rvshows[<?= (int) $idx; ?>][end]" value="<?= htmlspecialchars($range['end'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" />
+                </div>
+                <div class="row-actions">
+                  <button type="button" class="btn-danger remove-row">Remove</button>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="closure-row" data-row-index="0">
+              <div>
+                <label for="rv-start-0">Start date</label>
+                <input type="date" id="rv-start-0" name="rvshows[0][start]" required />
+              </div>
+              <div>
+                <label for="rv-end-0">End date</label>
+                <input type="date" id="rv-end-0" name="rvshows[0][end]" />
+              </div>
+              <div class="row-actions">
+                <button type="button" class="btn-danger remove-row">Remove</button>
+              </div>
+            </div>
+          <?php endif; ?>
+        </div>
+        <button type="button" class="btn-secondary" id="addRvShowRow">Add another RV Show range</button>
+
         <div style="margin-top: 16px;">
-          <button type="submit" class="btn-primary">Save closure days</button>
+          <button type="submit" class="btn-primary">Save schedule</button>
         </div>
       </form>
 
-      <p class="footer-note">Leave the end date blank for single-day closures. Add as many date ranges as you need.</p>
+      <p class="footer-note">Leave the end date blank for single-day entries. Add as many date ranges as you need.</p>
     </div>
   </div>
 
   <script>
     (function () {
-      const list = document.getElementById('closureList');
-      const addRowBtn = document.getElementById('addRow');
+      const closureList = document.getElementById('closureList');
+      const rvShowList = document.getElementById('rvShowList');
+      const addClosureRowBtn = document.getElementById('addClosureRow');
+      const addRvShowRowBtn = document.getElementById('addRvShowRow');
 
-      function renumberRows() {
-        const rows = Array.from(list.querySelectorAll('.closure-row'));
+      function renumberRows(listElement, prefix) {
+        const rows = Array.from(listElement.querySelectorAll('.closure-row'));
         rows.forEach((row, idx) => {
           row.dataset.rowIndex = idx;
 
@@ -291,60 +372,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           const endInput = row.querySelector('input[name$="[end]"]');
 
           if (startInput) {
-            startInput.name = `closures[${idx}][start]`;
-            startInput.id = `start-${idx}`;
+            startInput.name = `${prefix}[${idx}][start]`;
+            startInput.id = `${prefix === 'closures' ? 'start' : 'rv-start'}-${idx}`;
             const label = row.querySelector(`label[for="${startInput.id}"]`);
             if (label) label.setAttribute('for', startInput.id);
           }
 
           if (endInput) {
-            endInput.name = `closures[${idx}][end]`;
-            endInput.id = `end-${idx}`;
+            endInput.name = `${prefix}[${idx}][end]`;
+            endInput.id = `${prefix === 'closures' ? 'end' : 'rv-end'}-${idx}`;
             const label = row.querySelector(`label[for="${endInput.id}"]`);
             if (label) label.setAttribute('for', endInput.id);
           }
         });
       }
 
-      function addRow(startValue = '', endValue = '') {
-        const idx = list.querySelectorAll('.closure-row').length;
+      function addRow(listElement, prefix, startValue = '', endValue = '') {
+        const idx = listElement.querySelectorAll('.closure-row').length;
+        const isClosure = prefix === 'closures';
         const row = document.createElement('div');
         row.className = 'closure-row';
         row.dataset.rowIndex = idx;
         row.innerHTML = `
           <div>
-            <label for="start-${idx}">Start date</label>
-            <input type="date" id="start-${idx}" name="closures[${idx}][start]" value="${startValue}" required />
+            <label for="${isClosure ? 'start' : 'rv-start'}-${idx}">Start date</label>
+            <input type="date" id="${isClosure ? 'start' : 'rv-start'}-${idx}" name="${prefix}[${idx}][start]" value="${startValue}" required />
           </div>
           <div>
-            <label for="end-${idx}">End date</label>
-            <input type="date" id="end-${idx}" name="closures[${idx}][end]" value="${endValue}" />
+            <label for="${isClosure ? 'end' : 'rv-end'}-${idx}">End date</label>
+            <input type="date" id="${isClosure ? 'end' : 'rv-end'}-${idx}" name="${prefix}[${idx}][end]" value="${endValue}" />
           </div>
           <div class="row-actions">
             <button type="button" class="btn-danger remove-row">Remove</button>
           </div>
         `;
 
-        list.appendChild(row);
+        listElement.appendChild(row);
       }
 
-      addRowBtn.addEventListener('click', function () {
-        addRow();
+      addClosureRowBtn.addEventListener('click', function () {
+        addRow(closureList, 'closures');
       });
 
-      list.addEventListener('click', function (event) {
+      addRvShowRowBtn.addEventListener('click', function () {
+        addRow(rvShowList, 'rvshows');
+      });
+
+      function handleRemoveClick(event, listElement, prefix) {
         if (event.target.classList.contains('remove-row')) {
           const row = event.target.closest('.closure-row');
           if (row) {
             row.remove();
-            renumberRows();
+            renumberRows(listElement, prefix);
           }
         }
+      }
+
+      closureList.addEventListener('click', function (event) {
+        handleRemoveClick(event, closureList, 'closures');
       });
 
-      // Ensure there is always at least one row to edit
-      if (list.querySelectorAll('.closure-row').length === 0) {
-        addRow();
+      rvShowList.addEventListener('click', function (event) {
+        handleRemoveClick(event, rvShowList, 'rvshows');
+      });
+
+      if (closureList.querySelectorAll('.closure-row').length === 0) {
+        addRow(closureList, 'closures');
+      }
+
+      if (rvShowList.querySelectorAll('.closure-row').length === 0) {
+        addRow(rvShowList, 'rvshows');
       }
     })();
   </script>

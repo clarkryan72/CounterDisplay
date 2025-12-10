@@ -10,19 +10,28 @@ function isAppointment(date) {
   return APPOINTMENTS.includes(ymd(date));
 }
 
-// Closed days
-function isClosed(date) {
+function isDateInRange(date, range) {
   const t = date.getTime();
-  return CLOSED_RANGES.some((range) => {
-    const start = new Date(range.start + "T00:00:00").getTime();
-    const end = new Date(range.end + "T23:59:59").getTime();
-    return t >= start && t <= end;
-  });
+  const start = new Date(range.start + "T00:00:00").getTime();
+  const end = new Date(range.end + "T23:59:59").getTime();
+  return t >= start && t <= end;
 }
 
 // Atlanta Camping & RV Show days
 function isCamperShow(date) {
-  return CAMPER_SHOW_DATES.includes(ymd(date));
+  return CAMPER_SHOW_RANGES.some((range) => isDateInRange(date, range));
+}
+
+// Closed days
+function isClosed(date) {
+  const isSunday = date.getDay() === 0;
+  const closedByRange = CLOSED_RANGES.some((range) => isDateInRange(date, range));
+
+  if (isCamperShow(date)) {
+    return false;
+  }
+
+  return closedByRange || isSunday;
 }
 
 function renderCalendar(monthOffset, gridId, labelId) {
@@ -80,10 +89,10 @@ function renderCalendar(monthOffset, gridId, labelId) {
     if (weekday === 0 || weekday === 6) cell.classList.add("weekend");
     if (isToday) cell.classList.add("today");
 
-    if (isClosed(cellDate)) {
-      cell.classList.add("closed");
-    } else if (isCamperShow(cellDate)) {
+    if (isCamperShow(cellDate)) {
       cell.classList.add("camper-show");
+    } else if (isClosed(cellDate)) {
+      cell.classList.add("closed");
     } else if (isAppointment(cellDate)) {
       // currently unused, but here if you bring appointments back later
       cell.classList.add("appt");
