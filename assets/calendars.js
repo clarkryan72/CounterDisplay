@@ -25,6 +25,10 @@ function isCamperShow(date) {
   return CAMPER_SHOW_DATES.includes(ymd(date));
 }
 
+function isTimBirthday(date) {
+  return date.getMonth() === 0 && date.getDate() === 2;
+}
+
 function renderCalendar(monthOffset, gridId, labelId) {
   const today = new Date();
   const firstDayDate = new Date(
@@ -71,10 +75,7 @@ function renderCalendar(monthOffset, gridId, labelId) {
     const cell = document.createElement("div");
     cell.className = "calendar-cell";
 
-    // set date number and data attribute for ::before
-    cell.textContent = day;
-    cell.setAttribute("data-daynum", String(day));
-
+    const isBirthday = isTimBirthday(cellDate);
     const isToday =
       cellDate.getFullYear() === today.getFullYear() &&
       cellDate.getMonth() === today.getMonth() &&
@@ -91,6 +92,44 @@ function renderCalendar(monthOffset, gridId, labelId) {
     } else if (isAppointment(cellDate)) {
       // currently unused, but here if you bring appointments back later
       cell.classList.add("appt");
+    } else if (isBirthday) {
+      cell.classList.add("birthday");
+    }
+
+    if (isBirthday) {
+      cell.setAttribute("data-daynum", String(day));
+
+      const dayBadge = document.createElement("div");
+      dayBadge.className = "birthday-daynum";
+      dayBadge.textContent = day;
+
+      const icon = document.createElement("div");
+      icon.className = "birthday-icon";
+      icon.style.setProperty("--birthday-icon-url", "url('tim-birthday.gif')");
+
+      const label = document.createElement("div");
+      label.className = "birthday-label";
+      label.textContent = "Tim's Birthday";
+
+      const candles = document.createElement("div");
+      candles.className = "birthday-candles";
+
+      for (let i = 0; i < 3; i++) {
+        const candle = document.createElement("span");
+        candle.className = "candle";
+
+        const flame = document.createElement("span");
+        flame.className = "flame";
+
+        candle.appendChild(flame);
+        candles.appendChild(candle);
+      }
+
+      cell.append(dayBadge, icon, label, candles);
+    } else {
+      // set date number and data attribute for ::before
+      cell.textContent = day;
+      cell.setAttribute("data-daynum", String(day));
     }
 
     gridElem.appendChild(cell);

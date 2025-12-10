@@ -621,7 +621,7 @@ body {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 1.8rem;
+  grid-auto-rows: 2.2rem;
   gap: 0.22rem;
   text-align: center;
 }
@@ -699,6 +699,168 @@ body {
   color: #ffffff;
   font-weight: 700;
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+/* TIM'S BIRTHDAY (JAN 2) */
+.calendar-cell.birthday {
+  background: radial-gradient(circle at 25% 15%, rgba(251, 191, 36, 0.45), transparent 40%),
+    radial-gradient(circle at 70% 10%, rgba(56, 189, 248, 0.35), transparent 45%),
+    linear-gradient(140deg, rgba(236, 72, 153, 0.82), rgba(59, 130, 246, 0.85));
+  border-color: rgba(248, 250, 252, 0.8);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.5), 0 0 30px rgba(59, 130, 246, 0.45);
+  color: #fff7ed;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  padding: 0.25rem 0.3rem 0.2rem;
+  position: relative;
+  overflow: hidden;
+  animation: birthdayGlow 4s ease-in-out infinite;
+}
+
+.birthday-daynum {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(248, 250, 252, 0.7);
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff9c2;
+  box-shadow: 0 0 6px rgba(15, 23, 42, 0.5);
+}
+
+.birthday-icon {
+  --birthday-icon-url: linear-gradient(180deg, #fdba74, #fb7185);
+  width: 1.4rem;
+  height: 1.4rem;
+  background-image: var(--birthday-icon-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border-radius: 0.45rem;
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.4), 0 0 8px rgba(14, 165, 233, 0.4);
+  animation: birthdayIconFloat 2.6s ease-in-out infinite;
+}
+
+.birthday-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+  background: linear-gradient(90deg, #fff7c2, #fde68a, #f472b6, #a5b4fc);
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: birthdayLabelShimmer 3s linear infinite;
+}
+
+.birthday-candles {
+  display: inline-flex;
+  gap: 0.16rem;
+  align-items: flex-end;
+  justify-content: center;
+  margin-top: -0.1rem;
+}
+
+.birthday-candles .candle {
+  position: relative;
+  width: 0.22rem;
+  height: 0.7rem;
+  border-radius: 0.12rem;
+  background: linear-gradient(180deg, #f472b6, #ec4899 50%, #f9a8d4);
+  box-shadow: 0 0 6px rgba(236, 72, 153, 0.7);
+  transform-origin: bottom center;
+  animation: candleRock 2.1s ease-in-out infinite;
+}
+
+.birthday-candles .candle:nth-child(2) {
+  height: 0.8rem;
+  animation-delay: 0.2s;
+}
+
+.birthday-candles .candle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.birthday-candles .flame {
+  position: absolute;
+  top: -0.32rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0.32rem;
+  height: 0.36rem;
+  border-radius: 50% 50% 45% 45%;
+  background: radial-gradient(circle at 50% 35%, #fff7c2 40%, rgba(251, 191, 36, 0.7) 75%, rgba(234, 179, 8, 0.1));
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.85);
+  animation: flameFlicker 1.6s ease-in-out infinite;
+}
+
+.birthday-candles .candle:nth-child(2) .flame {
+  animation-duration: 1.35s;
+}
+
+.birthday-candles .candle:nth-child(3) .flame {
+  animation-duration: 1.8s;
+}
+
+@keyframes flameFlicker {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    filter: drop-shadow(0 0 0 rgba(251, 191, 36, 0.35));
+  }
+  45% {
+    transform: translateX(-50%) scale(1.08);
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.85));
+  }
+  70% {
+    transform: translateX(-50%) scale(0.92);
+  }
+}
+
+@keyframes candleRock {
+  0%,
+  100% {
+    transform: rotate(0deg) scaleY(1);
+  }
+  40% {
+    transform: rotate(-3deg) scaleY(1.03);
+  }
+  70% {
+    transform: rotate(2deg) scaleY(0.98);
+  }
+}
+
+@keyframes birthdayIconFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-0.08rem) scale(1.02);
+  }
+  70% {
+    transform: translateY(0.05rem) scale(0.99);
+  }
+}
+
+@keyframes birthdayLabelShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes birthdayGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.5), 0 0 26px rgba(59, 130, 246, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(236, 72, 153, 0.65), 0 0 36px rgba(59, 130, 246, 0.6);
+  }
 }
 
 @keyframes camperShowBounce {
