@@ -97,35 +97,9 @@ function renderCalendar(monthOffset, gridId, labelId) {
     }
 
     if (isBirthday) {
+      // match the RV show styling: full-tile background with the provided GIF
+      cell.textContent = day;
       cell.setAttribute("data-daynum", String(day));
-
-      const dayBadge = document.createElement("div");
-      dayBadge.className = "birthday-daynum";
-      dayBadge.textContent = day;
-
-      const icon = document.createElement("div");
-      icon.className = "birthday-icon";
-      icon.style.setProperty("--birthday-icon-url", "url('tim-birthday.gif')");
-
-      const label = document.createElement("div");
-      label.className = "birthday-label";
-      label.textContent = "Tim's Birthday";
-
-      const candles = document.createElement("div");
-      candles.className = "birthday-candles";
-
-      for (let i = 0; i < 3; i++) {
-        const candle = document.createElement("span");
-        candle.className = "candle";
-
-        const flame = document.createElement("span");
-        flame.className = "flame";
-
-        candle.appendChild(flame);
-        candles.appendChild(candle);
-      }
-
-      cell.append(dayBadge, icon, label, candles);
     } else {
       // set date number and data attribute for ::before
       cell.textContent = day;
