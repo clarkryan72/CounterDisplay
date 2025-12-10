@@ -26,7 +26,7 @@ header('Expires: 0');
   </div>
 
   <!-- JS config + modules -->
-  <script src="assets/config.js"></script>
+  <script src="assets/config.php"></script>
   <script src="assets/header.js"></script>
   <script src="assets/weather.js"></script>
   <script src="assets/calendars.js"></script>
