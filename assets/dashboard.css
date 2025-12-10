@@ -208,6 +208,14 @@ body {
   height: 4.4rem;
 }
 
+.weather-temp-now {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #f9fafb;
+  letter-spacing: 0.04em;
+  margin-top: 0.05rem;
+}
+
 /* HI / LO LINE */
 .weather-hi-lo {
   display: flex;

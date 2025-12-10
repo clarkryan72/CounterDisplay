@@ -79,6 +79,7 @@ async function loadWeather() {
     const maxTemps = daily.temperature_2m_max;
     const minTemps = daily.temperature_2m_min;
     const codes = daily.weathercode;
+    const currentTemp = Math.round(current.temperature_2m);
 
     rowElem.innerHTML = "";
 
@@ -99,6 +100,9 @@ async function loadWeather() {
 
       const maxT = Math.round(maxTemps[i]);
       const minT = Math.round(minTemps[i]);
+      const nowTempMarkup = isToday
+        ? `<div class="weather-temp-now">${currentTemp}°</div>`
+        : "";
 
       const cell = document.createElement("div");
       cell.className = "weather-day" + (isToday ? " today" : "");
@@ -112,6 +116,7 @@ async function loadWeather() {
       cell.innerHTML = `
         <div class="weather-day-label">${label}</div>
         <img class="${iconClass}" src="${WEATHER_ICON_BASE}/${iconName}.svg" alt="${desc} icon" />
+        ${nowTempMarkup}
         <div class="${hiLoClass}">
           <span class="temp-hi">${maxT}°</span>
           <span class="slash">/</span>
