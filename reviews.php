@@ -44,7 +44,12 @@ if (!is_array($allReviews)) {
 }
 
 $fiveStar = array_values(array_filter($allReviews, function ($r) {
-    return isset($r['rating']) && (int)$r['rating'] === 5;
+    if (!isset($r['rating'])) {
+        return false;
+    }
+
+    $rating = (int) $r['rating'];
+    return $rating >= 4 && $rating <= 5;
 }));
 
 usort($fiveStar, function ($a, $b) {

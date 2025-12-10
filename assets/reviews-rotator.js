@@ -4,6 +4,7 @@ let reviewTotal = 0;
 let overallRating = null;
 let reviewVersion = null;
 const REVIEW_PROGRESS_KEY = "nc_review_progress";
+const REVIEW_PROGRESS_ENDPOINT = "reviews-progress.php";
 
 function loadStoredIndex(version, maxLength) {
   try {
@@ -21,6 +22,26 @@ function loadStoredIndex(version, maxLength) {
   }
 }
 
+async function loadServerIndex(version, maxLength) {
+  try {
+    const res = await fetch(REVIEW_PROGRESS_ENDPOINT);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data || data.success === false) throw new Error(data?.error || "Progress error");
+
+    if (!data.version || data.version !== version) {
+      return 0;
+    }
+
+    const idx = Number.parseInt(data.index, 10);
+    if (Number.isNaN(idx) || idx < 0) return 0;
+    return maxLength > 0 ? idx % maxLength : 0;
+  } catch (err) {
+    console.warn("Unable to load server progress", err);
+    return null;
+  }
+}
+
 function storeNextIndex(version, index) {
   try {
     localStorage.setItem(
@@ -30,6 +51,18 @@ function storeNextIndex(version, index) {
   } catch (err) {
     console.warn("Unable to persist review progress", err);
   }
+}
+
+function persistServerIndex(version, index, total) {
+  fetch(REVIEW_PROGRESS_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ version, index, total }),
+  }).catch((err) => {
+    console.warn("Unable to persist server review progress", err);
+  });
 }
 
 function setupReviewQr() {
@@ -72,6 +105,7 @@ function showCurrentReview() {
   const nextIndex = (currentReviewIndex + 1) % reviews.length;
   if (reviewVersion) {
     storeNextIndex(reviewVersion, nextIndex);
+    persistServerIndex(reviewVersion, nextIndex, reviews.length);
   }
   currentReviewIndex = nextIndex;
 }
@@ -94,7 +128,12 @@ async function loadReviews() {
     reviewVersion = `${reviews.length}-${newestDate}-${oldestDate}`;
 
     if (reviews.length) {
-      currentReviewIndex = loadStoredIndex(reviewVersion, reviews.length);
+      const serverIndex = await loadServerIndex(reviewVersion, reviews.length);
+      if (serverIndex !== null) {
+        currentReviewIndex = serverIndex;
+      } else {
+        currentReviewIndex = loadStoredIndex(reviewVersion, reviews.length);
+      }
       showCurrentReview();
     } else {
       document.getElementById("reviewText").textContent =
