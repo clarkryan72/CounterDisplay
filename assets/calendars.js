@@ -103,6 +103,10 @@ function renderCalendar(monthOffset, gridId, labelId) {
       dayBadge.className = "birthday-daynum";
       dayBadge.textContent = day;
 
+      const icon = document.createElement("div");
+      icon.className = "birthday-icon";
+      icon.style.setProperty("--birthday-icon-url", "url('tim-birthday.gif')");
+
       const label = document.createElement("div");
       label.className = "birthday-label";
       label.textContent = "Tim's Birthday";
@@ -121,7 +125,7 @@ function renderCalendar(monthOffset, gridId, labelId) {
         candles.appendChild(candle);
       }
 
-      cell.append(dayBadge, label, candles);
+      cell.append(dayBadge, icon, label, candles);
     } else {
       // set date number and data attribute for ::before
       cell.textContent = day;
