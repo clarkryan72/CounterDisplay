@@ -81,10 +81,16 @@ function showCurrentReview() {
   const countEl = document.getElementById("reviewsCount");
 
   if (!reviews.length) {
-    textEl.textContent = "No reviews available.";
+    const message = reviewTotal > 0
+      ? "No 4–5 star reviews available."
+      : "No reviews available.";
+    textEl.textContent = message;
     authorEl.textContent = "";
     timeEl.textContent = "";
-    countEl.textContent = `${reviewTotal} Customer Reviews`;
+    ratingEl.textContent = overallRating
+      ? "★".repeat(Math.round(overallRating))
+      : "";
+    countEl.textContent = `${reviewTotal} Reviews`;
     return;
   }
 
@@ -100,7 +106,7 @@ function showCurrentReview() {
     ratingEl.textContent = "";
   }
 
-  countEl.textContent = `${reviewTotal} Customer Reviews`;
+  countEl.textContent = `${reviewTotal} Reviews`;
 
   const nextIndex = (currentReviewIndex + 1) % reviews.length;
   if (reviewVersion) {
@@ -134,13 +140,8 @@ async function loadReviews() {
       } else {
         currentReviewIndex = loadStoredIndex(reviewVersion, reviews.length);
       }
-      showCurrentReview();
-    } else {
-      document.getElementById("reviewText").textContent =
-        "No reviews available.";
-      document.getElementById("reviewsCount").textContent =
-        `${reviewTotal} Customer Reviews`;
     }
+    showCurrentReview();
   } catch (err) {
     console.error("Reviews error:", err);
     document.getElementById("reviewText").textContent =

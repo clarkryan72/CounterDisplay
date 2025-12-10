@@ -44,11 +44,8 @@ if (!is_array($allReviews)) {
 }
 
 $fiveStar = array_values(array_filter($allReviews, function ($r) {
-    // Some legacy/imported reviews don't carry an explicit rating. Show them
-    // instead of silently dropping them so the dashboard reflects the full
-    // master list. When a rating exists, still require 4–5 stars.
     if (!isset($r['rating'])) {
-        return true;
+        return false; // only surface reviews with an explicit rating
     }
 
     $rating = (int) $r['rating'];
