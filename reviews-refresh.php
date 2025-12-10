@@ -111,41 +111,118 @@ function save_master_reviews($path, array $reviews)
     return rename($tmpPath, $path);
 }
 
+function normalize_rating($rating)
+{
+    if (is_numeric($rating)) {
+        return (float) $rating;
+    }
+
+    if (is_string($rating)) {
+        $map = [
+            'one'   => 1,
+            'two'   => 2,
+            'three' => 3,
+            'four'  => 4,
+            'five'  => 5,
+        ];
+        $key = strtolower(trim($rating));
+        if (isset($map[$key])) {
+            return $map[$key];
+        }
+    }
+
+    return null;
+}
+
+function normalize_google_reviews(array $googleReviews, int $cutoffTimestamp)
+{
+    $normalized = [];
+
+    foreach ($googleReviews as $r) {
+        $timestamp = null;
+
+        if (isset($r['time']) && is_numeric($r['time'])) {
+            $timestamp = (int) $r['time'];
+        } elseif (isset($r['createTime'])) {
+            $parsed = strtotime($r['createTime']);
+            $timestamp = $parsed !== false ? $parsed : null;
+        } elseif (isset($r['updateTime'])) {
+            $parsed = strtotime($r['updateTime']);
+            $timestamp = $parsed !== false ? $parsed : null;
+        }
+
+        if ($timestamp === null || $timestamp < $cutoffTimestamp) {
+            continue; // ignore reviews older than 24 hours or without a timestamp
+        }
+
+        $rating = normalize_rating($r['rating'] ?? null);
+        $reviewDate = date('Y-m-d H:i:s', $timestamp);
+
+        $reviewId = null;
+        if (!empty($r['review_id'])) {
+            $reviewId = 'google-' . $r['review_id'];
+        } elseif (!empty($r['id'])) {
+            $reviewId = 'google-' . $r['id'];
+        } elseif (!empty($r['name'])) {
+            $reviewId = 'google-' . $r['name'];
+        }
+
+        if ($reviewId === null) {
+            $hash = md5(strtolower(($r['author_name'] ?? '') . '|' . ($r['text'] ?? '') . '|' . $reviewDate));
+            $reviewId = 'google-' . $hash;
+        }
+
+        $normalized[] = [
+            'id'            => $reviewId,
+            'source'        => 'google',
+            'customer_name' => $r['author_name'] ?? 'Google Reviewer',
+            'review'        => $r['text'] ?? '',
+            'review_date'   => $reviewDate,
+            'rating'        => $rating,
+        ];
+    }
+
+    return $normalized;
+}
+
 function append_new_google_reviews(array $googleReviews, $masterPath)
 {
     $masterReviews = load_master_reviews($masterPath);
 
     $existingKeys = [];
     foreach ($masterReviews as $review) {
-        $key = md5(strtolower(($review['customer_name'] ?? '') . '|' . ($review['review'] ?? '') . '|' . ($review['review_date'] ?? '')));
-        $existingKeys[$key] = true;
-    }
-
-    foreach ($googleReviews as $r) {
-        if (!isset($r['time'])) {
-            continue;
+        if (!empty($review['id'])) {
+            $existingKeys['id:' . $review['id']] = true;
         }
 
-        $reviewDate = date('Y-m-d H:i:s', (int) $r['time']);
+        $dedupeHash = md5(strtolower(($review['customer_name'] ?? '') . '|' . ($review['review'] ?? '') . '|' . ($review['review_date'] ?? '')));
+        $existingKeys['hash:' . $dedupeHash] = true;
+    }
 
-        $entry = [
-            'source'       => 'google',
-            'customer_name'=> $r['author_name'] ?? 'Google Reviewer',
-            'review'       => $r['text'] ?? '',
-            'review_date'  => $reviewDate,
-            'rating'       => $r['rating'] ?? null,
-        ];
+    $added = 0;
+    foreach ($googleReviews as $entry) {
+        $idKey = 'id:' . ($entry['id'] ?? '');
+        $hashKey = 'hash:' . md5(strtolower(($entry['customer_name'] ?? '') . '|' . ($entry['review'] ?? '') . '|' . ($entry['review_date'] ?? '')));
 
-        $key = md5(strtolower(($entry['customer_name'] ?? '') . '|' . ($entry['review'] ?? '') . '|' . ($entry['review_date'] ?? '')));
-        if (isset($existingKeys[$key])) {
-            continue; // already present
+        if (($entry['id'] ?? null) && isset($existingKeys[$idKey])) {
+            continue; // duplicate by explicit ID
+        }
+        if (isset($existingKeys[$hashKey])) {
+            continue; // duplicate by content hash
         }
 
         $masterReviews[] = $entry;
-        $existingKeys[$key] = true;
+        $existingKeys[$idKey] = true;
+        $existingKeys[$hashKey] = true;
+        $added++;
     }
 
-    return save_master_reviews($masterPath, $masterReviews);
+    if ($added === 0) {
+        return [false, 0];
+    }
+
+    $saved = save_master_reviews($masterPath, $masterReviews);
+    return [$saved, $added];
 }
 
 try {
@@ -173,6 +250,10 @@ try {
     $total   = $result['user_ratings_total'] ?? null;
     $reviews = $result['reviews'] ?? [];
 
+    if (empty($reviews)) {
+        throw new Exception('No reviews returned from Google; master_reviews.json unchanged.');
+    }
+
     // Attach overall rating info to each review so the front-end can use it
     foreach ($reviews as &$r) {
         $r['_overall_rating']     = $rating;
@@ -194,20 +275,32 @@ try {
         throw new Exception('Failed to write reviews-cache.json');
     }
 
-    // Append any new Google reviews to master_reviews.json (deduped)
+    // Append any new Google reviews (from last 24 hours) to master_reviews.json (deduped)
     $masterFile = __DIR__ . '/master_reviews.json';
-    $masterUpdated = append_new_google_reviews($reviews, $masterFile);
+    $cutoff     = time() - 24 * 60 * 60;
+    $recentNormalized = normalize_google_reviews($reviews, $cutoff);
 
-    if (!$masterUpdated) {
+    [$masterSaved, $added] = append_new_google_reviews($recentNormalized, $masterFile);
+
+    $message = 'reviews-cache.json updated';
+    if ($added > 0 && !$masterSaved) {
         throw new Exception('Failed to update master_reviews.json');
+    }
+
+    if ($added > 0) {
+        $message .= " and $added new review(s) appended to master_reviews.json";
+    } else {
+        $message .= '; no new reviews to append (only keeping last 24 hours)';
     }
 
     echo json_encode([
         'success' => true,
-        'message' => 'reviews-cache.json updated and master_reviews.json merged',
+        'message' => $message,
         'count'   => count($reviews),
+        'added'   => $added,
     ]);
 } catch (Exception $e) {
+    error_log('reviews-refresh.php error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
