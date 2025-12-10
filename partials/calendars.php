@@ -17,6 +17,8 @@
     </div>
 
     <div class="calendar-footer">
+      <span><span class="legend-dot legend-dot-closed"></span>Closed</span>
+      <span><span class="legend-dot legend-dot-show"></span>RV Show</span>
     </div>
   </article>
 
@@ -38,6 +40,8 @@
     </div>
 
     <div class="calendar-footer">
+      <span><span class="legend-dot legend-dot-closed"></span>Closed</span>
+      <span><span class="legend-dot legend-dot-show"></span>RV Show</span>
     </div>
   </article>
 </section>
