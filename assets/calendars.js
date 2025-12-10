@@ -105,17 +105,6 @@ function renderCalendar(monthOffset, gridId, labelId) {
     gridElem.appendChild(cell);
   }
 
-  // Next month muted days to fill grid to 6 weeks (42 cells)
-  const totalCells = 42;
-  let nextDayNumber = 1;
-  while (gridElem.children.length < totalCells) {
-    const cellDate = new Date(year, month + 1, nextDayNumber);
-    const cell = document.createElement("div");
-    cell.className = "calendar-cell muted";
-    cell.textContent = cellDate.getDate();
-    gridElem.appendChild(cell);
-    nextDayNumber++;
-  }
 }
 
 function renderCalendars() {
