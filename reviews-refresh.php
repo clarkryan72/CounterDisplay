@@ -3,7 +3,8 @@
 //
 // This script should be run by a CRON job once per day (e.g., at midnight).
 // It calls Google Places API ONE TIME, updates reviews-cache.json, and
-// appends any NEW reviews since today to master_reviews.json.
+// appends any NEW reviews to master_reviews.json without overwriting the
+// existing collection.
 
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
@@ -63,16 +64,20 @@ function load_master_reviews($path)
 
     $json = file_get_contents($path);
     if ($json === false) {
-        return [];
+        throw new Exception('Unable to read existing master_reviews.json');
     }
 
     $decoded = json_decode($json, true);
     if ($decoded === null) {
-        return [];
+        throw new Exception('Invalid JSON in master_reviews.json; refusing to overwrite');
     }
 
     $reviews = $decoded['reviews'] ?? $decoded;
-    return is_array($reviews) ? $reviews : [];
+    if (!is_array($reviews)) {
+        throw new Exception('master_reviews.json does not contain a reviews array');
+    }
+
+    return $reviews;
 }
 
 function save_master_reviews($path, array $reviews)
@@ -88,7 +93,22 @@ function save_master_reviews($path, array $reviews)
         'reviews'    => array_values($reviews),
     ];
 
-    return file_put_contents($path, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) !== false;
+    $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return false;
+    }
+
+    // Make a simple backup before overwriting
+    if (file_exists($path)) {
+        @copy($path, $path . '.bak');
+    }
+
+    $tmpPath = $path . '.tmp';
+    if (file_put_contents($tmpPath, $json) === false) {
+        return false;
+    }
+
+    return rename($tmpPath, $path);
 }
 
 function append_new_google_reviews(array $googleReviews, $masterPath)
@@ -101,16 +121,12 @@ function append_new_google_reviews(array $googleReviews, $masterPath)
         $existingKeys[$key] = true;
     }
 
-    $todayStart = strtotime('today');
     foreach ($googleReviews as $r) {
         if (!isset($r['time'])) {
             continue;
         }
 
         $reviewDate = date('Y-m-d H:i:s', (int) $r['time']);
-        if (strtotime($reviewDate) < $todayStart) {
-            continue; // only append items dated today or later
-        }
 
         $entry = [
             'source'       => 'google',
@@ -178,7 +194,7 @@ try {
         throw new Exception('Failed to write reviews-cache.json');
     }
 
-    // Append any new (today or later) Google reviews to master_reviews.json
+    // Append any new Google reviews to master_reviews.json (deduped)
     $masterFile = __DIR__ . '/master_reviews.json';
     $masterUpdated = append_new_google_reviews($reviews, $masterFile);
 
