@@ -25,10 +25,6 @@ function isCamperShow(date) {
   return CAMPER_SHOW_DATES.includes(ymd(date));
 }
 
-function isTimBirthday(date) {
-  return date.getMonth() === 0 && date.getDate() === 2;
-}
-
 function renderCalendar(monthOffset, gridId, labelId) {
   const today = new Date();
   const firstDayDate = new Date(
@@ -75,7 +71,6 @@ function renderCalendar(monthOffset, gridId, labelId) {
     const cell = document.createElement("div");
     cell.className = "calendar-cell";
 
-    const isBirthday = isTimBirthday(cellDate);
     const isToday =
       cellDate.getFullYear() === today.getFullYear() &&
       cellDate.getMonth() === today.getMonth() &&
@@ -92,19 +87,11 @@ function renderCalendar(monthOffset, gridId, labelId) {
     } else if (isAppointment(cellDate)) {
       // currently unused, but here if you bring appointments back later
       cell.classList.add("appt");
-    } else if (isBirthday) {
-      cell.classList.add("birthday");
     }
 
-    if (isBirthday) {
-      // full-tile birthday styling with the provided GIF
-      cell.textContent = day;
-      cell.setAttribute("data-daynum", String(day));
-    } else {
-      // set date number and data attribute for ::before
-      cell.textContent = day;
-      cell.setAttribute("data-daynum", String(day));
-    }
+    // set date number and data attribute for ::before
+    cell.textContent = day;
+    cell.setAttribute("data-daynum", String(day));
 
     gridElem.appendChild(cell);
   }
