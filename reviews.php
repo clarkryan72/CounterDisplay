@@ -44,8 +44,11 @@ if (!is_array($allReviews)) {
 }
 
 $fiveStar = array_values(array_filter($allReviews, function ($r) {
+    // Some legacy/imported reviews don't carry an explicit rating. Show them
+    // instead of silently dropping them so the dashboard reflects the full
+    // master list. When a rating exists, still require 4–5 stars.
     if (!isset($r['rating'])) {
-        return false;
+        return true;
     }
 
     $rating = (int) $r['rating'];
@@ -84,11 +87,16 @@ function format_date($dateStr)
 }
 
 $formattedReviews = array_map(function ($r) use ($averageRating) {
+    $rating = isset($r['rating']) && is_numeric($r['rating'])
+        ? (float) $r['rating']
+        : null;
+
     return [
         'author_name' => $r['customer_name'] ?? '',
         'text' => $r['review'] ?? '',
         'review_date' => $r['review_date'] ?? null,
         'relative_time_description' => format_date($r['review_date'] ?? null),
+        'rating' => $rating,
         '_overall_rating' => $averageRating,
     ];
 }, $fiveStar);
