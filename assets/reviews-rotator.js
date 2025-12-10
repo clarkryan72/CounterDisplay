@@ -85,7 +85,13 @@ async function loadReviews() {
     reviews = data.reviews || [];
     reviewTotal = data.total ?? reviews.length;
     overallRating = data.rating ?? null;
-    reviewVersion = data.generated_at || `v1-${reviews.length}`;
+    // Keep the version stable unless the list itself changes so we don't
+    // reset progress every time new data is fetched. Use a simple signature
+    // based on the review count plus the first/last dates (ordered newest →
+    // oldest in reviews.php) instead of the generated_at timestamp.
+    const newestDate = reviews[0]?.review_date ?? "";
+    const oldestDate = reviews[reviews.length - 1]?.review_date ?? "";
+    reviewVersion = `${reviews.length}-${newestDate}-${oldestDate}`;
 
     if (reviews.length) {
       currentReviewIndex = loadStoredIndex(reviewVersion, reviews.length);
