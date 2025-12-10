@@ -7,8 +7,8 @@
       />
     </div>
     <div class="header-main">
-      <div class="header-date" id="todayDate">Tuesday, December 9th, 2025</div> <!-- compact placeholder date -->
-      <div class="header-time" id="todayTime">5:05 PM</div>
+      <div class="header-date" id="todayDate">Loading date…</div>
+      <div class="header-time" id="todayTime">Loading time…</div>
     </div>
   </article>
 </section>
