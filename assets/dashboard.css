@@ -118,6 +118,7 @@ body {
 .weather-card {
   position: relative;
   overflow: hidden;
+  padding: 0.85rem 1.1rem;
 }
 
 .weather-card::before {
@@ -135,7 +136,7 @@ body {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .weather-header {
@@ -159,21 +160,21 @@ body {
 }
 
 .weather-day-row {
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
 .weather-day {
   background: rgba(15, 23, 42, 0.9);
   border-radius: 1.1rem;
   border: 1px solid rgba(148, 163, 184, 0.55);
-  padding: 0.45rem 0.3rem 0.55rem;
+  padding: 0.38rem 0.28rem 0.45rem;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.18rem;
   justify-content: center;
 }
 
@@ -199,17 +200,17 @@ body {
 }
 
 .weather-icon-big {
-  width: 5.6rem;
-  height: 5.6rem;
+  width: 5rem;
+  height: 5rem;
 }
 
 .weather-icon-small {
-  width: 4.4rem;
-  height: 4.4rem;
+  width: 3.9rem;
+  height: 3.9rem;
 }
 
 .weather-temp-now {
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #f9fafb;
   letter-spacing: 0.04em;
@@ -226,12 +227,12 @@ body {
 }
 
 .weather-hi-lo-large .temp-hi {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
 .weather-hi-lo-large .temp-lo {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 600;
   color: #e5e7eb;
   opacity: 0.95;
@@ -243,19 +244,19 @@ body {
 }
 
 .weather-hi-lo-regular .temp-hi {
-  font-size: 1.5rem;
+  font-size: 1.38rem;
   font-weight: 700;
 }
 
 .weather-hi-lo-regular .temp-lo {
-  font-size: 1.2rem;
+  font-size: 1.12rem;
   font-weight: 500;
   color: #e5e7eb;
   opacity: 0.9;
 }
 
 .weather-hi-lo-regular .slash {
-  font-size: 1.1rem;
+  font-size: 1rem;
   opacity: 0.7;
 }
 
@@ -568,6 +569,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-header {
